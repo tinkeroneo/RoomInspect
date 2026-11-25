@@ -1,0 +1,12 @@
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+import {test} from 'node:test';
+const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const js=html.split('<script>')[1].split('</script>')[0];
+const section=(a,b)=>js.slice(js.indexOf(a),js.indexOf(b));
+test('script parses and DOM references exist',()=>{new Function(js);const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(new Set(ids).size,ids.length);for(const m of js.matchAll(/\$\('([^']+)'\)/g))assert.ok(ids.includes(m[1]),m[1])});
+const G=new Function(section('const G=(()=>','const roomHeight=')+';return G')();
+test('rectangular and concave geometry',()=>{const p=G.polygon({x:0,y:0,w:4,d:5});assert.equal(Math.abs(G.area(p)),20);assert.equal(G.ray([0,0],[1,0],G.walls(p)).w.dir,1);const l=[[0,0],[0,4],[2,4],[2,2],[4,2],[4,0]];assert.ok(G.simple(l));assert.ok(!G.simple([[0,0],[2,2],[0,2],[2,0]]));assert.ok(G.inside(G.center(l),l));assert.ok(Math.abs(G.triangles(l).reduce((n,t)=>n+Math.abs(G.area(t)),0)-12)<1e-8)});
+const M=new Function(section('const SurfaceMath=','const GPU=')+';return SurfaceMath')();
+test('photo homography',()=>{let p=[[.1,.2],[.9,.1],[.8,.9],[.2,.8]],h=M.homography(p);[[0,0],[1,0],[1,1],[0,1]].forEach((q,i)=>assert.ok(Math.hypot(...M.map(h,...q).map((v,j)=>v-p[i][j]))<1e-8));assert.throws(()=>M.homography([[0,0],[1,1],[1,0],[0,1]]))});
+test('object collisions',()=>{const f=new Function(section('function footprint(','function furnitureFits(')+section('function overlapFootprints(','function furnitureCollisions(')+';return overlapFootprints')();let a={x:0,y:0,w:2,d:1,angle:0};assert.ok(f(a,{...a,x:.9}));assert.ok(!f(a,{...a,x:2}));assert.ok(f(a,{...a,angle:45}))});
